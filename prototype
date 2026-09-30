@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exam Recorder – Clickable Prototype</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f8fa;--card:#fff;--ink:#16303a;--mut:#62808c;--line:#dbe6eb;--pri:#0f7c8a;--pri2:#e3f4f6;--red:#d64550;--ok:#2e9d6b;--warn:#c98a1b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a20;--card:#15262e;--ink:#e6f1f4;--mut:#8fb0bb;--line:#25404b;--pri:#3bb5c4;--pri2:#173640}}
+:root[data-theme="dark"]{--bg:#0e1a20;--card:#15262e;--ink:#e6f1f4;--mut:#8fb0bb;--line:#25404b;--pri:#3bb5c4;--pri2:#173640}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.logo{font-weight:700;font-size:17px;color:var(--pri)}.logo small{color:var(--mut);font-weight:400;margin-left:6px}
+.seg{display:flex;background:var(--pri2);border-radius:10px;padding:3px}.seg button{border:0;background:none;color:var(--ink);padding:7px 14px;border-radius:8px;font:inherit;cursor:pointer}.seg button.on{background:var(--pri);color:#fff}
+nav{display:flex;gap:6px;padding:10px 18px;overflow-x:auto}nav button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:999px;font:inherit;cursor:pointer;white-space:nowrap}nav button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+main{max-width:980px;margin:0 auto;padding:8px 18px 40px}
+h2{margin:10px 0 4px;font-size:22px}p.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.btn{border:0;background:var(--pri);color:#fff;padding:11px 18px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer}.btn.ghost{background:var(--pri2);color:var(--pri)}.btn.red{background:var(--red)}.btn:disabled{opacity:.45;cursor:default}
+input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.row>.btn{flex:0 0 auto}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:600;font-size:13px}
+.wrap{overflow-x:auto}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--pri2);color:var(--pri)}.tag.ok{background:#d9f3e6;color:#1d7a50}.tag.warn{background:#fbecd0;color:#8a5d0c}
+.cam{aspect-ratio:16/9;background:#0b1418;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8fb0bb;position:relative}
+.rec{position:absolute;top:12px;left:12px;background:var(--red);color:#fff;border-radius:999px;padding:3px 12px;font-size:13px;font-weight:600}
+.meter{height:10px;background:var(--pri2);border-radius:99px;overflow:hidden}.meter i{display:block;height:100%;width:30%;background:var(--ok);transition:width .15s}
+.steps{display:flex;gap:8px;margin-bottom:14px}.steps span{flex:1;text-align:center;padding:8px;border-radius:10px;background:var(--pri2);color:var(--mut);font-size:13px}.steps span.on{background:var(--pri);color:#fff}.steps span.done{color:var(--ok)}
+.big{font-size:30px;font-weight:700}.mut{color:var(--mut)}
+textarea{width:100%;min-height:150px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+.note{font-size:12px;color:var(--mut);text-align:center;padding:10px}
+</style></head><body>
+<header><div class="logo">Exam Recorder<small>working title</small></div>
+<div class="seg"><button id="bd" class="on" onclick="switchRole('d')">Doctor view</button><button id="ba" onclick="switchRole('a')">Admin panel</button></div></header>
+<nav id="nav"></nav><main id="m"></main>
+<div class="note">Clickable prototype for design and flow review. No real data is stored or recorded.</div>
+<script>
+const NAV={d:[['home','Home'],['rec','Record visit'],['lib','Visit library'],['tx','Transcripts'],['set','Settings']],
+a:[['clin','Clinics & providers'],['bill','Subscriptions'],['use','Usage'],['q','Transcription queue']]};
+const pts=['Alvarez, Maria','Brooks, James','Chen, Linda','Davis, Robert','Okafor, Grace'];
+let R='d',V='home',S={pt:'',step:0,rec:false,t:0,tm:null,mt:null,addendum:false};
+const $=s=>document.querySelector(s);
+function switchRole(r){R=r;V=NAV[r][0][0];$('#bd').className=r=='d'?'on':'';$('#ba').className=r=='a'?'on':'';draw()}
+function go(v){V=v;draw()}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function draw(){clearInterval(S.tm);clearInterval(S.mt);
+$('#nav').innerHTML=NAV[R].map(n=>`<button class="${n[0]==V?'on':''}" onclick="go('${n[0]}')">${n[1]}</button>`).join('');
+$('#m').innerHTML=(VIEWS[V]||(()=>''))();if(V=='rec')recInit();}
+function tbl(h,rows){return `<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table></div>`}
+const VIEWS={
+home:()=>`<h2>Good morning, Dr. Patel</h2><p class="sub">Choose a patient to begin. That is all it takes.</p>
+<div class="card"><div class="row"><select id="sel"><option value="">Select a patient</option>${pts.map(p=>`<option>${p}</option>`).join('')}</select>
+<button class="btn" onclick="S.pt=$('#sel').value;if(!S.pt)return alert('Please select a patient first');S.step=0;go('rec')">Start visit</button></div>
+<p class="mut" style="margin:10px 0 0;font-size:13px">Patient not listed? <a href="#" onclick="event.preventDefault();alert('Add patient: name and date of service only.')">Add a patient</a></p></div>
+<div class="grid"><div class="card"><div class="mut">Visits this month</div><div class="big">42</div></div><div class="card"><div class="mut">Awaiting transcription</div><div class="big">5</div></div><div class="card"><div class="mut">Completed</div><div class="big">37</div></div></div>`,
+rec:()=>`<h2>${S.pt||'No patient selected'}</h2><p class="sub">Visit on Sep 30, 2026</p>
+<div class="steps">${['1 Exam','2 Summary','3 Save'].map((x,i)=>`<span class="${i==S.step?'on':i<S.step?'done':''}">${i<S.step?'✓ ':''}${x}</span>`).join('')}</div>
+<div class="grid" style="grid-template-columns:2fr 1fr"><div class="card"><div class="cam" id="cam">Camera preview<span class="rec" id="rb" style="display:none">● REC</span></div></div>
+<div class="card"><div class="mut">Timer</div><div class="big" id="tm">00:00</div><div class="mut" style="margin:14px 0 4px">Microphone level</div><div class="meter"><i id="mt"></i></div>
+<p style="margin:14px 0 4px"><span class="tag ok">Camera detected</span> <span class="tag ok">Mic detected</span></p><div id="ctl"></div></div></div>`,
+lib:()=>`<h2>Visit library</h2><p class="sub">Videos are filed automatically by month and year.</p>
+<div class="grid">${['September 2026 · 42 visits','August 2026 · 51 visits','July 2026 · 47 visits'].map(x=>`<div class="card"><b>📁 ${x.split(' · ')[0]}</b><div class="mut">${x.split(' · ')[1]}</div><p style="margin:12px 0 0"><button class="btn ghost" onclick="go('mlist')">Open</button></p></div>`).join('')}</div>`,
+mlist:()=>`<h2>September 2026</h2><p class="sub"><a href="#" onclick="event.preventDefault();go('lib')">← Back to library</a></p><div class="card">${tbl(['Patient','Date','Exam','Summary','Status',''],
+[['Alvarez, Maria','Sep 29','34 min','6 min','<span class="tag ok">Complete</span>','<button class="btn ghost" onclick="S.pt=\'Alvarez, Maria\';S.step=1;go(\'rec\')">Add addendum</button>'],['Brooks, James','Sep 28','22 min','4 min','<span class="tag warn">In transcription</span>',''],['Chen, Linda','Sep 28','48 min','9 min','<span class="tag ok">Complete</span>','']])}</div>`,
+tx:()=>`<h2>Transcripts</h2><p class="sub">Review and edit finished summaries.</p><div class="card">${tbl(['Patient','Summary','Status',''],[['Alvarez, Maria','6 min','<span class="tag ok">Ready</span>','<button class="btn ghost" onclick="go(\'edit\')">View / edit</button>'],['Brooks, James','4 min','<span class="tag warn">In progress</span>',''],['Davis, Robert','12 min','<span class="tag">Question from transcriptionist</span>','<button class="btn ghost" onclick="go(\'edit\')">Answer</button>']])}</div>`,
+edit:()=>`<h2>Alvarez, Maria · Summary</h2><p class="sub"><a href="#" onclick="event.preventDefault();go('tx')">← Back</a></p><div class="card"><textarea>HPI: 58-year-old female presenting for follow-up. Reports improved range of motion since last visit...\n\nExam: Findings as recorded in exam video.\n\nAssessment & Plan: Continue current plan. Return in 4 weeks.</textarea><p class="row" style="margin:12px 0 0"><button class="btn" onclick="alert('Saved')">Save changes</button><button class="btn ghost" onclick="alert('Copied for EMR')">Copy for EMR</button></p></div>`,
+set:()=>`<h2>Settings</h2><p class="sub">Just the essentials.</p><div class="card"><label>Camera<select><option>Auto-detected: USB Camera Tower</option><option>Built-in webcam</option></select></label><p></p><label>Microphone<select><option>Auto-detected: Tower Mic Array</option><option>Built-in microphone</option></select></label><p></p><label>Patient display (second monitor)<select><option>Monitor 2 – remembered</option><option>Monitor 1</option></select></label><p class="mut" style="font-size:13px">Your choices are remembered, including after a restart.</p><button class="btn" onclick="alert('Test recording: 5 seconds with playback')">Run 5-second test</button></div>`,
+clin:()=>`<h2>Clinics & providers</h2><p class="sub">Manage who is on the platform.</p><div class="card"><div class="row" style="margin-bottom:10px"><input placeholder="Search clinics or providers"><button class="btn">+ Add clinic</button></div>${tbl(['Clinic','Users','Roles','Plan','Status'],[['Patel Orthopedics','2','Doctor, Assistant','Annual','<span class="tag ok">Active</span>'],['Lakeside PT','4','Doctor, Assistant, Admin','Quarterly','<span class="tag ok">Active</span>'],['Mindful Psychiatry','1','Doctor','Free trial · 9 days left','<span class="tag warn">Trial</span>']])}</div><div class="card"><b>Roles</b><p class="mut" style="margin:4px 0 0">Doctor · Assistant · Admin · Transcriptionist · MASTER (company support)</p></div>`,
+bill:()=>`<h2>Subscriptions & payments</h2><p class="sub">Plans, invoices and card payments.</p><div class="grid"><div class="card"><div class="mut">Active subscriptions</div><div class="big">38</div></div><div class="card"><div class="mut">On free trial</div><div class="big">6</div></div><div class="card"><div class="mut">Invoices due</div><div class="big">3</div></div></div><div class="card">${tbl(['Clinic','Plan','Next charge','Method','Invoice'],[['Patel Orthopedics','Annual','Jan 12, 2027','Card •••• 4242','<button class="btn ghost">View</button>'],['Lakeside PT','Quarterly','Oct 15, 2026','Invoice','<button class="btn ghost">Send</button>'],['Mindful Psychiatry','Trial','Oct 9, 2026','None yet','<button class="btn ghost">Remind</button>']])}</div>`,
+use:()=>`<h2>Usage</h2><p class="sub">How the platform is being used.</p><div class="grid"><div class="card"><div class="mut">Visits recorded (30 days)</div><div class="big">1,284</div></div><div class="card"><div class="mut">Hours of video</div><div class="big">826</div></div><div class="card"><div class="mut">Storage used</div><div class="big">1.9 TB</div></div></div><div class="card"><b>Visits per week</b><div style="display:flex;gap:10px;align-items:flex-end;height:120px;margin-top:10px">${[45,60,52,80,70,95,88].map(h=>`<div style="flex:1;height:${h}%;background:var(--pri);border-radius:6px 6px 0 0"></div>`).join('')}</div></div>`,
+q:()=>`<h2>Transcription queue</h2><p class="sub">Summaries waiting in TRANSCRIBE.</p><div class="card">${tbl(['Clinic','Patient','Length','Waiting','Assigned to'],[['Patel Orthopedics','Brooks, James','4 min','2 h','Dana'],['Lakeside PT','Nguyen, Amy','8 min','5 h','Unassigned'],['Patel Orthopedics','Davis, Robert','12 min','1 day','Dana']])}<p class="mut" style="margin:10px 0 0;font-size:13px">When a transcript is completed, the summary is removed from TRANSCRIBE only. Videos stay in the month/year folder.</p></div>`};
+function recInit(){const c=$('#ctl'),labels=['exam','summary'];
+if(S.step>=2){c.innerHTML=`<p><b>Save to cloud</b></p><p class="mut" style="font-size:13px">Exam and summary go to September 2026. The summary also goes to the transcriptionist.</p><button class="btn" onclick="this.textContent='Saved ✓';this.disabled=true;setTimeout(()=>go('home'),900)">Save to cloud</button>`;return}
+c.innerHTML=S.rec?`<button class="btn red" onclick="stopRec()">Stop ${labels[S.step]}</button>`:`<button class="btn" onclick="startRec()">Start ${labels[S.step]} recording</button>`;
+if(S.rec)run()}
+function run(){$('#rb').style.display='block';$('#cam').firstChild.textContent='Recording…';S.tm=setInterval(()=>{S.t++;$('#tm').textContent=fmt(S.t)},1000);S.mt=setInterval(()=>{$('#mt').style.width=(25+Math.random()*55)+'%'},180)}
+function startRec(){S.rec=true;S.t=0;draw()}
+function stopRec(){S.rec=false;S.step++;draw()}
+draw();
+</script></body></html>
